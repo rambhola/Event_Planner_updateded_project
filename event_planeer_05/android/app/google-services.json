@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "556277665925",
+    "project_id": "event-planeer-05-30a5a",
+    "storage_bucket": "event-planeer-05-30a5a.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:556277665925:android:f463b6396f3c3db4fe59ec",
+        "android_client_info": {
+          "package_name": "com.annovasolutions.event_planeer_05.event_planeer_05"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4ed1EBx58xk6NxH5gfYXv0jAiN0LiA_M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:556277665925:android:d3370f376309e7b9fe59ec",
+        "android_client_info": {
+          "package_name": "com.codebetter.firebasedemo"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4ed1EBx58xk6NxH5gfYXv0jAiN0LiA_M"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
