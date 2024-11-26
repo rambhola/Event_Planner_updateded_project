@@ -11,6 +11,7 @@ class _AbooutPageState extends State<AboutPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey,
       appBar: AppBar(
         title: Text('About', style: TextStyle(color: Colors.white)),
         centerTitle: true,

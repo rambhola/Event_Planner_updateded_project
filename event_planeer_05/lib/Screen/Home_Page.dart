@@ -1,22 +1,27 @@
+import 'dart:convert';
+import 'dart:developer';
 
 import 'package:carousel_slider/carousel_slider.dart';
-import 'package:flutter/cupertino.dart';
+import 'package:event_planeer_05/Screen/ServiceMasterList.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart';
 
+import '../Model/EventListModel.dart';
 import 'AboutPage.dart';
 import 'EnquiryPage.dart';
 import 'EventPage.dart';
 import 'GallaryPage.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
-  State<HomeScreen> createState() => _SliderScreenState();
+  State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _SliderScreenState extends State<HomeScreen> {
-  List imageList = [
+class _HomeScreenState extends State<HomeScreen> {
+  // Slider Images
+  final List<Map<String, String>> imageList = [
     {"image_path": 'Assets/Images/SliderImages/slider01.jpg'},
     {"image_path": 'Assets/Images/SliderImages/slider02.jpg'},
     {"image_path": 'Assets/Images/SliderImages/slider03.jpg'}
@@ -24,41 +29,8 @@ class _SliderScreenState extends State<HomeScreen> {
 
   CarouselController carouselController = CarouselController();
   int currentIndex = 0;
-  List<String> events = [
-    ('Wedding'),
-    ('Engagement'),
-    ('Birthday'),
-    ('Baby Shower'),
-    ('Anniversary'),
-    ('Retirement Party'),
-    ('Get-together'),
-    ('Pool Party'),
-    ('house party'),
-    ('Holi Party'),
-    ('Halloween'),
-    ('Valentines Party'),
-    ('Freshers Party'),
-    ('Farewell Party'),
-    ('Pre-Wedding Shoot'),
-    ('Maternity Shoot'),
-    ('Baby Shoot'),
-  ];
 
-  final List<Color> colors = [
-    Color(0xffdfe2fd),
-    Color(0xffF2D6BF),
-    Color(0xffe3b2b1),
-    Color(0xffdfe2fd),
-    Color(0xffD99B82),
-    Color(0xffb1ae99),
-    Color(0xffACC4BE),
-    Color(0xffEFDECD),
-    Color(0xfff1e9b4),
-    Color(0xfff2d4c9),
-    Color(0xffe7c9b1),
-    Color(0xffe5d5ed)
-  ];
-
+  // Bottom Navigation
   int _selectedIndex = 0;
 
   void onBottomNavigatorButtonTapped(int index) {
@@ -70,13 +42,13 @@ class _SliderScreenState extends State<HomeScreen> {
       case 0:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
         );
         break;
       case 1:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => AboutPage()),
+          MaterialPageRoute(builder: (context) => const AboutPage()),
         );
         break;
       case 2:
@@ -88,35 +60,83 @@ class _SliderScreenState extends State<HomeScreen> {
       case 3:
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => EventPage()),
+          MaterialPageRoute(builder: (context) => ServiceListUI()),
         );
+        break;
     }
   }
 
+  // Fetch Event List from API
+  Future<List<EventListModel>> getList() async {
+    try {
+      final response = await get(
+        Uri.parse('http://tutorials.codebetter.in:7087/auth/events/list'),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> jsonResponse = jsonDecode(response.body);
+
+        if (jsonResponse['data'] is List) {
+          final List<dynamic> dataList = jsonResponse['data'];
+          return [
+            EventListModel(
+              status: jsonResponse['status'] ?? false,
+              message: jsonResponse['message'] ?? '',
+              data: dataList.map((item) => Data.fromJson(item)).toList(),
+            )
+          ];
+        } else {
+          log('Error: "data" field is not a List in the response');
+          return [];
+        }
+      } else {
+
+        log('Error: HTTP ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      log('Exception: $e');
+      return [];
+    }
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey,
       appBar: AppBar(
-        backgroundColor: Color(0xff4391EC),
-        iconTheme: IconThemeData(color: Colors.white),
+        backgroundColor: const Color(0xff4391EC),
+        iconTheme: const IconThemeData(color: Colors.white),
+        title: const Text(
+          'Home Screen',
+          style: TextStyle(color: Colors.white),
+        ),
+        centerTitle: true,
+        actions: [
+          IconButton(onPressed: (){}, icon: Icon(Icons.search_rounded,)),
+          IconButton(onPressed: (){}, icon: Icon(Icons.message)),
+          IconButton(onPressed: (){}, icon: Icon(Icons.account_circle))
+        ],
       ),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Slider Section
           Stack(
             children: [
               InkWell(
                 onTap: () {
-                  print(currentIndex);
+                  log('Current Index: $currentIndex');
                 },
                 child: CarouselSlider(
-                  items: imageList.map((item) => Image.asset(
-                    item['image_path'],
-                    fit: BoxFit.cover,
-                    width: double.infinity,
-                  ),
-                  ).toList(),
-                  // carouselController: carouselController,
+                  items: imageList
+                      .map(
+                        (item) => Image.asset(
+                          item['image_path']!,
+                          fit: BoxFit.cover,
+                          width: double.infinity,
+                        ),
+                      )
+                      .toList(),
                   options: CarouselOptions(
                     scrollPhysics: const BouncingScrollPhysics(),
                     autoPlay: true,
@@ -138,13 +158,11 @@ class _SliderScreenState extends State<HomeScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: imageList.asMap().entries.map((entry) {
                     return GestureDetector(
-                      onTap: () =>
-                          carouselController.animateToPage(entry.key),
+                      onTap: () => carouselController.animateToPage(entry.key),
                       child: Container(
                         width: currentIndex == entry.key ? 17 : 7,
                         height: 7.0,
-                        margin:
-                        const EdgeInsets.symmetric(horizontal: 3.0),
+                        margin: const EdgeInsets.symmetric(horizontal: 3.0),
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(10),
                           color: currentIndex == entry.key
@@ -159,41 +177,56 @@ class _SliderScreenState extends State<HomeScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            'Events',
-            style: TextStyle(
-              color: Colors.black,
-              fontWeight: FontWeight.w300,
-              fontSize: 20,
+          const Padding(
+            padding: EdgeInsets.all(8.0),
+            child: Text(
+              'Events List',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w400,
+                fontSize: 20,
+              ),
             ),
           ),
+          // Events List Section
           Expanded(
-            child: ListView.separated(
-              itemCount: events.length,
-              separatorBuilder: (BuildContext context, int index) =>
-              const Divider(),
-              itemBuilder: (BuildContext context, int index) {
-                return Container(
-                  height: 120,
-                  width: 450,
-                  color: colors[index % colors.length],
-                  child: Text(
-                    events[index],
-                    style: TextStyle(
-                        color: Colors.black,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold),
-                  ),
-                );
+            child: FutureBuilder<List<EventListModel>>(
+              future: getList(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (snapshot.hasError) {
+                  log("Error: ${snapshot.error}");
+                  return const Center(child: Text('Failed to load events.'));
+                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                  return const Center(child: Text('No events found.'));
+                } else {
+                  final events = snapshot.data!.first.data;
+                  return ListView.builder(
+                    itemCount: events.length,
+                    itemBuilder: (context, index) {
+                      final event = events[index];
+                      return Card(
+                          margin: const EdgeInsets.all(8.0),
+                          child: ListTile(
+                            tileColor: Colors.yellowAccent[100],
+                            title: Text(
+                              event.eventName ,
+                              style: TextStyle(
+                                  fontSize: 17, fontWeight: FontWeight.bold,wordSpacing: 2),
+                            ),
+                          ));
+                    },
+                  );
+                }
               },
             ),
           ),
         ],
       ),
-      floatingActionButtonLocation:
-      FloatingActionButtonLocation.endFloat,
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       floatingActionButton: FloatingActionButton(
-        child: Icon(Icons.add),
+        child: const Icon(Icons.add),
         backgroundColor: Colors.white,
         onPressed: () {
           Navigator.push(
@@ -203,7 +236,7 @@ class _SliderScreenState extends State<HomeScreen> {
         },
       ),
       bottomNavigationBar: BottomNavigationBar(
-        items: <BottomNavigationBarItem>[
+        items: const <BottomNavigationBarItem>[
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'HOME',
@@ -221,7 +254,7 @@ class _SliderScreenState extends State<HomeScreen> {
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.event),
-            label: 'EVENTS',
+            label: 'SERVICE LIST',
             backgroundColor: Color(0xff4391EC),
           ),
         ],

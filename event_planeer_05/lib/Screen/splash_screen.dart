@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../OTP AUTHENTICATION/Login_Screen.dart';
+
+import 'loginPage.dart';
 
 class splash_screen extends StatefulWidget {
   const splash_screen({super.key});
@@ -14,7 +15,7 @@ class _splash_screenState extends State<splash_screen> {
   void initState(){
     super.initState();
     Timer(Duration(seconds: 3 ), (){
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>const Loginscreen()));
+      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>LoginPage()));
     });
   }
   @override
