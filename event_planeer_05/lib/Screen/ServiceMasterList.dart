@@ -51,8 +51,9 @@ class _ServiceListUIState extends State<ServiceListUI> {
     return Scaffold(
       backgroundColor: Colors.grey,
       appBar: AppBar(
+        title: Text('Service List', style: TextStyle(color: Colors.white)),
         centerTitle: true,
-        title: const Text("Service List"),
+        backgroundColor: Color(0xff4391EC),
       ),
       body: FutureBuilder<List<ServiceModel>>(
         future: _serviceMasterList.getList(),

@@ -1,34 +1,56 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-
+import 'package:shared_preferences/shared_preferences.dart';
+import 'Home_Page.dart';
 import 'loginPage.dart';
 
-class splash_screen extends StatefulWidget {
-  const splash_screen({super.key});
+class SplashScreen extends StatefulWidget {
+  const SplashScreen({super.key});
 
   @override
-  State<splash_screen> createState() => _splash_screenState();
+  State<SplashScreen> createState() => SplashScreenState();
 }
 
-class _splash_screenState extends State<splash_screen> {
+class SplashScreenState extends State<SplashScreen> {
+  static const String keyLogin = "login";
 
-  void initState(){
+  @override
+  void initState() {
     super.initState();
-    Timer(Duration(seconds: 3 ), (){
-      Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=>LoginPage()));
-    });
+    whereToGo(); // Determine navigation destination on splash screen load
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Color(0xff4391EC),
+      backgroundColor: const Color(0xff4391EC),
       body: Stack(
         children: [
           Center(
             child: Image.asset('Assets/Images/logo_prev_ui.png'),
-          )
+          ),
         ],
       ),
     );
+  }
+
+  // Determine the navigation path based on shared preferences
+  void whereToGo() async {
+    var sharedPref = await SharedPreferences.getInstance();
+    var isLoggedIn = sharedPref.getBool(keyLogin);
+
+    Timer(const Duration(seconds: 3), () {
+      if (isLoggedIn != null && isLoggedIn) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      } else {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginPage()),
+        );
+      }
+    });
   }
 }

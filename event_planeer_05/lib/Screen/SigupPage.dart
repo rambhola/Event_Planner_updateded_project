@@ -1,157 +1,165 @@
 import 'dart:convert';
-import 'dart:math';
-
+import 'package:event_planeer_05/Screen/Home_Page.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
-import 'loginPage.dart';
-class Siguppage extends StatefulWidget {
-  const Siguppage({super.key});
+import 'package:http/http.dart' as http;
+import '../Model/UIHelper.dart';
 
+class SignUpPage extends StatefulWidget {
+  const SignUpPage({Key? key}) : super(key: key);
 
   @override
-  State<Siguppage> createState() => _SiguppageState();
+  _SignUpPageState createState() => _SignUpPageState();
 }
-class _SiguppageState extends State<Siguppage> {
+
+class _SignUpPageState extends State<SignUpPage> {
   TextEditingController nameController = TextEditingController();
   TextEditingController emailController = TextEditingController();
-  TextEditingController phoneController = TextEditingController();
+  TextEditingController contactController = TextEditingController();
   TextEditingController passwordController = TextEditingController();
 
-  void signUp(String name,String email, String contact, String password) async {
+  // Sign Up API call
+  void signUp(String name, String email, String contact, String password) async {
+    UIHelper.showLoadingDialog(context, "Creating new account...");
+
     try {
-      Response response = await post(
-        Uri.parse('http://tutorials.codebetter.in:7087/auth/registercustomer'),
-        body: {
-          'name':name,
+      final Uri apiUrl =
+      Uri.parse("http://tutorials.codebetter.in:7087/auth/registercustomer");
+
+      final response = await http.post(
+        apiUrl,
+        headers: {"Content-Type": "application/json"},
+        body: json.encode({
+          'name': name,
           'email': email,
-          'password': contact,
-          'Contact': password,
-        },
+          'contact': contact,
+          'password': password,
+        }),
       );
 
       if (response.statusCode == 200) {
+        // Parse API response
+        var responseData = json.decode(response.body);
 
-        print("Sign up Successfully");
+        // Check for 'status' field and its value
+        if (responseData["status"] == true) {
+          print("Sign Up Successful!");
+          Navigator.popUntil(context, (route) => route.isFirst);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const HomeScreen()),
+          );
+        } else {
+          Navigator.pop(context);
+          UIHelper.showAlertDialog(
+            context,
+            "Sign Up Failed",
+            responseData['message'] ?? "Unknown error occurred.",
+          );
+        }
       } else {
-        print("Sign up failed: ${response.statusCode}");
+        Navigator.pop(context);
+        UIHelper.showAlertDialog(
+          context,
+          "An error occurred",
+          "Unable to sign up. Please try again.",
+        );
       }
-    } catch (e) {
-      print(e.toString());
+    } catch (ex) {
+      // Handle exceptions
+      Navigator.pop(context);
+      UIHelper.showAlertDialog(context, "An error occurred", ex.toString());
+    }
+  }
+
+  // Function to check input values
+  void checkValues() {
+    String name = nameController.text.trim();
+    String email = emailController.text.trim();
+    String contact = contactController.text.trim();
+    String password = passwordController.text.trim();
+
+    if (name.isEmpty || email.isEmpty || contact.isEmpty || password.isEmpty) {
+      UIHelper.showAlertDialog(
+        context,
+        "Incomplete Data",
+        "Please fill all the fields.",
+      );
+    } else {
+      signUp(name, email, contact, password);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: Text("SigUpPage"),
-        backgroundColor: Colors.blue,
-      ),
-      body: Padding(
-        padding: EdgeInsets.symmetric(vertical: 35, horizontal: 20),
-        child: SingleChildScrollView(
-          child: SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: nameController ,
-                  decoration: InputDecoration(
-                    labelText: "Name",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+      body: SafeArea(
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 40),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Text(
+                    "Event Planner",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.secondary,
+                      fontSize: 45,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                SizedBox(height: 10,),
-                TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    labelText: "Email",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: nameController,
+                    decoration: const InputDecoration(labelText: "Name"),
                   ),
-                ),
-                SizedBox(height: 10,),
-                TextField(
-                  controller: phoneController,
-                  decoration: InputDecoration(
-                    labelText: "Contact",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: contactController,
+                    decoration: const InputDecoration(labelText: "Contact"),
                   ),
-                ),
-
-                SizedBox(height: 10),
-                TextField(
-                  controller: passwordController,
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: emailController,
+                    decoration: const InputDecoration(labelText: "Email Address"),
                   ),
-                ),
-                const SizedBox(height: 10),
-                Center(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 40),
-                    decoration: BoxDecoration(
-                      color: Colors.blue,
-                      borderRadius: BorderRadius.circular(10),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.blueAccent.withOpacity(0.5),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: GestureDetector(
-                      onTap: () {
-                        signUp(
-                          emailController.text,
-                          passwordController.text,
-                          phoneController.text,
-                          nameController.text,
-                        );
-                      },
-                      child: const Text(
-                        "Sign Up",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: const InputDecoration(labelText: "Password"),
                   ),
-                ),
-
-                const SizedBox(height: 10),
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 300,horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        const Text("Do you already have an account?",style: TextStyle(fontSize: 15,fontWeight: FontWeight.bold),
-                        ),
-                        ElevatedButton(
-                          onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context)=>LoginPage()));
-                          },
-                            child: const Text("Log In ",style: TextStyle(fontSize: 15,color: Colors.red,fontWeight: FontWeight.bold),)),
-                      ],
-                    ),
+                  const SizedBox(height: 20),
+                  CupertinoButton(
+                    onPressed: checkValues,
+                    color: Theme.of(context).colorScheme.secondary,
+                    child: const Text("Sign Up"),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Text(
+              "Already have an account?",
+              style: TextStyle(fontSize: 16),
+            ),
+            CupertinoButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text(
+                "Log In",
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
         ),
       ),
     );

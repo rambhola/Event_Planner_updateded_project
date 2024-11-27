@@ -38,8 +38,7 @@ dependencies:
   cupertino_icons: ^1.0.6
   shared_preferences: ^2.2.3
   http: ^1.2.2
-  firebase_auth: ^5.2.0
-  firebase_core: ^3.4.0
+
   carousel_slider: ^5.0.0
   animate_do: ^3.1.2
 

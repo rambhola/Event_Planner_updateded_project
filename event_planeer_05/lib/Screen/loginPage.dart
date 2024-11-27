@@ -1,142 +1,157 @@
-import 'package:event_planeer_05/Screen/Home_Page.dart';
+import 'package:event_planeer_05/Screen/splash_screen.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert';
+
+import '../Model/UIHelper.dart';
+import 'Home_Page.dart';
 import 'SigupPage.dart';
 
 class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+  const LoginPage({Key? key}) : super(key: key);
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  _LoginPageState createState() => _LoginPageState();
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passController = TextEditingController();
+  TextEditingController emailController = TextEditingController();
+  TextEditingController passwordController = TextEditingController();
 
-  void login(String email, String password) async {
+  // Function to log in with email and password
+  void logIn(String email, String password) async {
+    UIHelper.showLoadingDialog(context, "Logging In..");
+
     try {
-      final response = await post(
-        Uri.parse('http://tutorials.codebetter.in:7087/auth/login'),
-        body: {'email': email, 'password': password},
+      final Uri apiUrl = Uri.parse("http://tutorials.codebetter.in:7087/auth/login");
+
+      final response = await http.post(
+        apiUrl,
+        headers: {"Content-Type": "application/json"},
+        body: json.encode({
+          'email': email,
+          'password': password,
+        }),
       );
 
       if (response.statusCode == 200) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => HomeScreen()),
-        );
+        var responseData = json.decode(response.body);
+
+        if (responseData["status"] == true) {
+          print("Log In Successful!");
+          Navigator.popUntil(context, (route) => route.isFirst);
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => HomeScreen()),
+          );
+        } else {
+          Navigator.pop(context);
+          UIHelper.showAlertDialog(context, "Login Failed", responseData['message']);
+        }
       } else {
-        _showErrorDialog("Login failed. Please try again.");
+        Navigator.pop(context);
+        UIHelper.showAlertDialog(context, "An error occurred", "Unable to log in. Please try again.");
       }
-    } catch (e) {
-      _showErrorDialog("An error occurred. Please try again.");
+    } catch (ex) {
+      Navigator.pop(context);
+      UIHelper.showAlertDialog(context, "An error occurred", ex.toString());
     }
   }
 
-  void _showErrorDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Error"),
-        content: Text(message),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("OK"),
-          ),
-        ],
-      ),
-    );
+  // Function to check if the input values are valid
+  void checkValues() {
+    String email = emailController.text.trim();
+    String password = passwordController.text.trim();
+
+    if (email.isEmpty || password.isEmpty) {
+      UIHelper.showAlertDialog(context, "Incomplete Data", "Please fill all the fields");
+    } else {
+      logIn(email, password);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        appBar: AppBar(
-          backgroundColor: Colors.blue,
-          centerTitle: true,
-          title: const Text("Login Page"),
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(20),
-          child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                TextField(
-                  controller: emailController,
-                  decoration: InputDecoration(
-                    labelText: "Email",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
+    return Scaffold(
+      body: SafeArea(
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 40),
+          child: Center(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  Text(
+                    "Event Planner",
+                    style: TextStyle(
+                      color: Theme.of(context).colorScheme.secondary,
+                      fontSize: 45,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: passController,
-                  obscureText: true,
-                  decoration: InputDecoration(
-                    labelText: "Password",
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(5),
-                    ),
+                  SizedBox(height: 10),
+                  TextField(
+                    controller: emailController,
+                    decoration: InputDecoration(labelText: "Email Address"),
                   ),
-                ),
-                const SizedBox(height: 20),
-                GestureDetector(
-                  onTap: () => login(emailController.text, passController.text),
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 20),
-                      decoration: BoxDecoration(
-                        color: Colors.blue,
-                        borderRadius: BorderRadius.circular(5),
-                      ),
-                      child: const Text(
-                        "Log In",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
+                  SizedBox(height: 10),
+                  TextField(
+                    controller: passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(labelText: "Password"),
+                  ),
+                  SizedBox(height: 20),
+                  CupertinoButton(
+                    onPressed: () async {
+                      // Validate input fields
+                      checkValues();
+
+                      // If credentials are correct, save login state in SharedPreferences
+                      final sharedPref = await SharedPreferences.getInstance();
+
+                      // Assuming login is successful, set the login state
+                      sharedPref.setBool(SplashScreenState.keyLogin, true);
+
+                      // Navigate to the HomeScreen
+                      Navigator.pushReplacement(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const HomeScreen(),
                         ),
-                      ),
-                    ),
+                      );
+                    },
+                    color: Theme.of(context).colorScheme.secondary,
+                    child: const Text("Log In"),
                   ),
-                ),
-                const SizedBox(height: 30),
-                Center(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        "Don't have an account?",
-                        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 5),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => Siguppage()),
-                          );
-                        },
-                        child: const Text(
-                          "Sign Up",
-                          style: TextStyle(
-                            fontSize: 15,
-                            color: Colors.red,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+
+                ],
+              ),
             ),
           ),
+        ),
+      ),
+      bottomNavigationBar: Container(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              "Don't have an account?",
+              style: TextStyle(fontSize: 16),
+            ),
+            CupertinoButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SignUpPage()),
+                );
+              },
+              child: Text(
+                "Sign Up",
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          ],
         ),
       ),
     );
